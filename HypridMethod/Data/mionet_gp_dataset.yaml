@@ -1,0 +1,81 @@
+# mionet_gp_dataset.yaml
+# Generate 5000 paper-like 2D GP samples for MIONet + FEM.
+
+runtime:
+  backend: numpy
+  device: cpu
+
+mesh:
+  domain: [0.0, 1.0, 0.0, 1.0]
+  # FEM mesh used to generate quadrature points.
+  # This is NOT the MIONet branch sensor size.
+  nx: 100
+  ny: 100
+
+sensor:
+  # MIONet branch input sensor grid.
+  # 100 x 100 = 10000 branch input dimension.
+  nx: 100
+  ny: 100
+  include_boundary: true
+
+quadrature:
+  # FEALPy quadrature points for FEM assembly.
+  order: 4
+  entity: cell
+
+output_points:
+  # Where MIONet predicts u or correction delta.
+  # Options: mesh_nodes, sensor, none
+  kind: mesh_nodes
+
+sampling:
+  # For 100x100 sensor + FEM quadrature, use rff.
+  method: rff
+  n_samples: 5000
+  seed: 0
+  f_seed_offset: 12345
+
+  # Smaller sample_chunk_size reduces peak memory, but is slower.
+  sample_chunk_size: 128
+
+  # Only relevant for exact method.
+  exact_warning_threshold: 8000
+
+fields:
+  k:
+    mean: 1.0
+    std: 0.2
+    length_scale: 0.2
+    clip_positive: true
+    min_value: 1.0e-6
+
+  f:
+    mean: 0.0
+    std: 1.0
+    length_scale: 0.2
+
+rff:
+  # Larger n_features gives a better GP approximation but uses more time.
+  n_features: 4096
+
+  # Smaller point_chunk_size reduces peak memory.
+  point_chunk_size: 2048
+
+exact:
+  jitter: 1.0e-8
+
+output:
+  # Recommended for 5000 samples.
+  # It writes separate .npy arrays and supports mmap loading.
+  format: npy_dir
+
+  # Directory when format=npy_dir.
+  # File path when format=npz.
+  path: ./data/mionet_gp_2d_5000
+
+  dtype: float32
+  overwrite: true
+
+  # Optional preview. Set to null to skip.
+  preview_plot: ./data/mionet_gp_2d_5000_preview.png
